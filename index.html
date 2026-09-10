@@ -171,7 +171,7 @@
   ];
 
   // ---------- setup / auth state ----------
-  const configOk = SUPABASE_URL.indexOf("YOUR-PROJECT") === -1 && SUPABASE_ANON_KEY.indexOf("YOUR-ANON-KEY") === -1;
+  const configOk = SUPABASE_URL.indexOf("YOUR-PROJECT") === -1 && SUPABASE_ANON_KEY.indexOf("sb_publishable_QGr9LC-_Ms9z89mWbbnIgA_l4Xx4guf") === -1;
   let db = null;
   if (configOk && window.supabase) { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
 
