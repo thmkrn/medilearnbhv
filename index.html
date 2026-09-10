@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kontakt-Tracker</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    --bg: #F3F5F4;
+    --card: #FFFFFF;
+    --ink: #16231F;
+    --muted: #5B6B66;
+    --line: #DEE4E1;
+    --navy: #17323B;
+    --green: #2E8B57;
+    --green-soft: #E7F3EC;
+    --red: #B34A4A;
+    --amber: #B3841F;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    margin: 0;
+    padding: 0;
+  }
+  #st-root {
+    padding: 18px 14px 40px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .st-h1 { font-family: Georgia, "Times New Roman", serif; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 2px; color: var(--navy); }
+  .st-sub { font-size: 13px; color: var(--muted); margin: 0 0 18px; }
+
+  .st-login-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .st-login-label { font-size: 13.5px; font-weight: 600; margin: 0 0 10px; }
+  .st-login-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .st-login-chip { border: 1px solid var(--line); background: #FAFBFA; border-radius: 100px; padding: 7px 12px; font-size: 12.5px; color: var(--navy); cursor: pointer; }
+  .st-login-chip:active { background: var(--green-soft); }
+  .st-login-or { font-size: 11.5px; color: var(--muted); margin: 0 0 8px; }
+  .st-login-card input { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 15px; font-family: inherit; color: var(--ink); background: #FCFDFC; }
+  .st-login-hint { font-size: 11px; color: var(--muted); margin: 10px 0 0; line-height: 1.4; }
+
+  .st-user-bar { display: flex; align-items: center; justify-content: space-between; font-size: 13px; margin-bottom: 12px; }
+  .st-switch-user { background: none; border: none; color: var(--muted); font-size: 11.5px; text-decoration: underline; cursor: pointer; padding: 2px; }
+  .st-tabs { display: flex; background: #E9EDEB; border-radius: 10px; padding: 3px; margin-bottom: 18px; }
+  .st-tab { flex: 1; border: none; background: transparent; padding: 8px 4px; font-size: 12.5px; font-weight: 600; color: var(--muted); border-radius: 8px; cursor: pointer; }
+  .st-tab.active { background: var(--card); color: var(--navy); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+  .st-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+  .st-stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 8px; text-align: center; }
+  .st-stat .n { font-family: Georgia, serif; font-size: 20px; font-weight: 600; color: var(--navy); display: block; }
+  .st-stat .l { font-size: 10.5px; color: var(--muted); margin-top: 2px; display: block; }
+
+  .st-section-title { font-size: 13px; font-weight: 600; color: var(--muted); margin: 22px 0 8px; }
+  .st-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .st-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 30px 10px; border: 1px dashed var(--line); border-radius: 12px; }
+  .st-loading { text-align: center; color: var(--muted); font-size: 13px; padding: 30px; }
+
+  .st-wizard-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .st-wizard-step-label { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .st-wizard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .st-wizard-btn { border: 1px solid var(--line); background: #FAFBFA; border-radius: 10px; padding: 14px 10px; text-align: center; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; }
+  .st-wizard-btn:active { background: var(--green-soft); }
+  .st-wizard-btn.positiv { border-color: var(--green); color: var(--green); }
+  .st-wizard-btn.negativ { border-color: var(--red); color: var(--red); }
+  .st-wizard-btn.teilerfolg { border-color: var(--amber); color: var(--amber); }
+  .st-wizard-btn.wide { grid-column: 1 / -1; }
+  .st-wizard-back { background: none; border: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 4px 0 10px; text-decoration: underline; }
+
+  .st-pile-row { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+  .st-pile-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .st-pile-label { font-size: 13px; font-weight: 600; }
+  .st-pile-count { font-family: Georgia, serif; font-size: 16px; color: var(--navy); }
+  .st-pile-resolved { font-size: 10.5px; color: var(--muted); margin-top: 4px; }
+  .st-pile-btns { display: flex; gap: 6px; }
+  .st-pile-btn { flex: 1; border: 1px solid var(--line); border-radius: 8px; padding: 8px 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; text-align: center; background: #FAFBFA; }
+  .st-pile-btn.positiv { color: var(--green); border-color: var(--green); }
+  .st-pile-btn.negativ { color: var(--red); border-color: var(--red); }
+  .st-pile-btn.teilerfolg { color: var(--amber); border-color: var(--amber); }
+  .st-pile-btn:active { opacity: 0.7; }
+
+  .st-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .st-bar-row:last-child { margin-bottom: 0; }
+  .st-bar-label { width: 118px; font-size: 11.5px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .st-bar-track { flex: 1; background: #EAEEEC; border-radius: 6px; height: 12px; overflow: hidden; }
+  .st-bar-fill { height: 100%; border-radius: 6px; background: var(--navy); }
+  .st-bar-pct { width: 60px; font-size: 11px; text-align: right; color: var(--muted); flex-shrink: 0; }
+  .st-bar-pct b { color: var(--ink); }
+
+  .st-log-item { display: flex; align-items: center; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .st-log-item:last-child { border-bottom: none; }
+  .st-log-left { display: flex; align-items: center; gap: 7px; color: var(--ink); }
+  .st-log-time { color: var(--muted); font-size: 11px; }
+  .st-log-del { background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; padding: 2px 4px; }
+  .st-log-toggle { display: block; margin: 8px auto 0; background: none; border: none; color: var(--navy); font-size: 11.5px; font-weight: 600; cursor: pointer; }
+  .st-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; flex-shrink: 0; }
+
+  .st-besttime { background: var(--green-soft); border-radius: 8px; padding: 8px 10px; font-size: 12px; color: var(--ink); margin-bottom: 12px; }
+  .st-besttime b { color: var(--green); }
+  .st-weekday-note { font-size: 10.5px; color: var(--muted); margin-top: 8px; }
+
+  .st-toggle, .st-export-btn { width: 100%; background: var(--card); border: 1px dashed var(--line); border-radius: 10px; padding: 11px; font-size: 13.5px; font-weight: 600; color: var(--navy); cursor: pointer; margin-bottom: 10px; }
+  .st-export-btn:last-child { margin-bottom: 0; }
+  .st-add { width: 100%; margin-top: 14px; background: var(--navy); color: #fff; border: none; border-radius: 9px; padding: 11px; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+  .st-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,0.18); z-index: 1000; max-width: 88vw; text-align: center; animation: st-toast-in 0.18s ease-out; }
+  @keyframes st-toast-in { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  .st-setup-box { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; font-size: 13px; line-height: 1.6; }
+  .st-setup-box code { background: #EEF1F0; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="st-root">
+  <div id="st-body"><div class="st-loading">Lädt …</div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function() {
+  // ============ KONFIGURATION ============
+  // Nach dem Anlegen des Supabase-Projekts hier eintragen (Project Settings -> API).
+  const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
+  const SITE_PASSWORD = "telefonie";
+  const AUTH_STORAGE_KEY = "kt-auth-ok";
+  // ========================================
+
+  const CHANNELS = ["WhatsApp", "Telefon"];
+
+  const TELEFON_ERREICHT_OUTCOMES = [
+    { id: "meldet_sich", label: "Meldet sich", type: "pending" },
+    { id: "telefontermin", label: "Telefontermin vereinbart", type: "teilerfolg" },
+    { id: "bhv_termin", label: "BHV-Termin abgemacht", type: "positiv" },
+    { id: "kein_bhv_termin", label: "Kein BHV-Termin abgemacht", type: "negativ" },
+  ];
+  const TELEFON_NICHT_ERREICHT_OUTCOMES = [
+    { id: "mailbox", label: "Mailboxnachricht hinterlassen", type: "pending" },
+    { id: "sms", label: "SMS hinterlassen", type: "pending" },
+    { id: "whatsapp_hinterlassen", label: "WhatsApp hinterlassen", type: "pending" },
+    { id: "nicht_erreicht", label: "Nicht erreicht (ohne Nachricht)", type: "pending" },
+  ];
+
+  const OUTCOME_LABELS = {
+    termin: "Termin abgemacht", kein_interesse: "Kein Interesse", meldet_sich: "Meldet sich",
+    bhv_termin: "BHV-Termin abgemacht", kein_bhv_termin: "Kein BHV-Termin abgemacht", telefontermin: "Telefontermin vereinbart",
+    mailbox: "Mailboxnachricht hinterlassen", sms: "SMS hinterlassen", nicht_erreicht: "Nicht erreicht (ohne Nachricht)",
+    wiedervorlage: "Wiedervorlage",
+  };
+  const POSITIV_IDS = ["termin", "bhv_termin"];
+  const NEGATIV_IDS = ["kein_interesse", "kein_bhv_termin"];
+  const TEILERFOLG_IDS = ["telefontermin"];
+  const OUTCOME_COLORS = { termin: "#2E8B57", bhv_termin: "#2E8B57", kein_interesse: "#B34A4A", kein_bhv_termin: "#B34A4A", meldet_sich: "#C97A3D", wiedervorlage: "#8B6BB3", mailbox: "#5B7FBE", sms: "#7A9E4E", nicht_erreicht: "#B3841F", telefontermin: "#B3841F" };
+
+  const PENDING_PILES = [
+    { id: "WhatsApp:meldet_sich", channel: "WhatsApp", outcome: "meldet_sich", label: "WhatsApp – meldet sich" },
+    { id: "Telefon:meldet_sich", channel: "Telefon", outcome: "meldet_sich", label: "Telefon – meldet sich" },
+    { id: "Telefon:mailbox", channel: "Telefon", outcome: "mailbox", label: "Telefon – Mailbox" },
+    { id: "Telefon:sms", channel: "Telefon", outcome: "sms", label: "Telefon – SMS hinterlassen" },
+    { id: "Telefon:nicht_erreicht", channel: "Telefon", outcome: "nicht_erreicht", label: "Telefon – nicht erreicht" },
+  ];
+
+  const TIME_BUCKETS = [
+    { key: "08-10", label: "08–10 Uhr", start: 8, end: 10 },
+    { key: "10-12", label: "10–12 Uhr", start: 10, end: 12 },
+    { key: "12-14", label: "12–14 Uhr", start: 12, end: 14 },
+    { key: "14-16", label: "14–16 Uhr", start: 14, end: 16 },
+    { key: "16-18", label: "16–18 Uhr", start: 16, end: 18 },
+    { key: "18-20", label: "18–20 Uhr", start: 18, end: 20 },
+    { key: "20-22", label: "20–22 Uhr", start: 20, end: 22 },
+  ];
+
+  // ---------- setup / auth state ----------
+  const configOk = SUPABASE_URL.indexOf("YOUR-PROJECT") === -1 && SUPABASE_ANON_KEY.indexOf("YOUR-ANON-KEY") === -1;
+  let db = null;
+  if (configOk && window.supabase) { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+
+  function isAuthed() { try { return localStorage.getItem(AUTH_STORAGE_KEY) === "1"; } catch (e) { return false; } }
+  function setAuthed() { try { localStorage.setItem(AUTH_STORAGE_KEY, "1"); } catch (e) {} }
+  let authed = isAuthed();
+  let authError = "";
+
+  let loaded = false;
+  let currentUser = null;
+  let contacts = [];
+  let resolutions = [];
+  let userIndex = {};
+  let view = "me";
+  let allUsersData = null;
+  let loadingAll = false;
+  let adminMode = false;
+  let showAllLog = false;
+  let toastMessage = null;
+  let toastTimer = null;
+
+  let wizChannel = null;
+  let wizReach = null;
+
+  const root = document.getElementById("st-body");
+
+  // ---------- utilities ----------
+  function pct(a, b) { if (!b) return 0; return Math.round((a / b) * 100); }
+  function rateClass(p) { return p >= 30 ? "st-rate-good" : ""; }
+  function escapeHtml(str) { const d = document.createElement("div"); d.textContent = str == null ? "" : str; return d.innerHTML; }
+  function slugify(name) {
+    const map = { "ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss" };
+    const s = name.trim().toLowerCase().replace(/[äöüß]/g, m => map[m]).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    return s || ("user-" + Date.now());
+  }
+  function formatTime(ts) {
+    const d = new Date(ts); const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    if (sameDay) return "heute, " + time;
+    return d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }) + ", " + time;
+  }
+
+  // ---------- Supabase-backed storage ----------
+  async function fetchActivePeopleIndex() {
+    const { data, error } = await db.from("people").select("slug,name").eq("active", true).order("name");
+    if (error) { console.error(error); return []; }
+    return data || [];
+  }
+  async function fetchPersonRow(slug) {
+    const { data, error } = await db.from("people").select("*").eq("slug", slug).maybeSingle();
+    if (error) { console.error(error); return null; }
+    return data;
+  }
+  async function upsertPerson(slug, fields) {
+    const row = Object.assign({ slug }, fields);
+    const { error } = await db.from("people").upsert(row, { onConflict: "slug" });
+    if (error) console.error("Supabase-Fehler", error);
+  }
+  async function persistUserData() {
+    if (!currentUser) return;
+    await upsertPerson(currentUser.slug, { name: currentUser.name, contacts, resolutions, active: true, updated_at: new Date().toISOString() });
+  }
+  async function addToUserIndex(slug, name) {
+    await upsertPerson(slug, { name, active: true });
+    userIndex[slug] = name;
+  }
+  async function removeFromUserIndex(slug) {
+    await upsertPerson(slug, { active: false });
+    delete userIndex[slug];
+  }
+  async function resetPersonData(slug, name) {
+    await upsertPerson(slug, { name, contacts: [], resolutions: [], updated_at: new Date().toISOString() });
+    if (currentUser && currentUser.slug === slug) { contacts = []; resolutions = []; }
+  }
+  async function loginAs(name) {
+    const slug = slugify(name);
+    currentUser = { name, slug };
+    root.innerHTML = '<div class="st-loading">Lädt …</div>';
+    const row = await fetchPersonRow(slug);
+    if (row) {
+      contacts = row.contacts || [];
+      resolutions = row.resolutions || [];
+      currentUser.name = row.name || name;
+      await upsertPerson(slug, { name: currentUser.name, active: true });
+    } else {
+      contacts = []; resolutions = [];
+      await upsertPerson(slug, { name, contacts: [], resolutions: [], active: true });
+    }
+    userIndex[slug] = currentUser.name;
+    view = "me";
+    render();
+  }
+  function switchUser() {
+    currentUser = null; contacts = []; resolutions = []; view = "me"; allUsersData = null;
+    wizChannel = null; wizReach = null;
+    render();
+  }
+  async function refreshAllUsersData() {
+    loadingAll = true; render();
+    const { data, error } = await db.from("people").select("name,contacts,resolutions").eq("active", true);
+    if (error) { console.error(error); allUsersData = []; }
+    else allUsersData = data || [];
+    loadingAll = false; render();
+  }
+  async function load() {
+    if (!configOk) { loaded = true; render(); return; }
+    try {
+      const idx = await fetchActivePeopleIndex();
+      userIndex = {};
+      idx.forEach(p => userIndex[p.slug] = p.name);
+    } catch (e) { userIndex = {}; }
+    loaded = true; render();
+  }
+
+  // ---------- toast ----------
+  function showToast(msg) {
+    toastMessage = msg; render();
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toastMessage = null; render(); }, 1600);
+  }
+
+  // ---------- contact logging ----------
+  function logContact(channel, outcomeId) {
+    contacts.unshift({ id: "c_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6), timestamp: Date.now(), channel, outcome: outcomeId });
+    wizChannel = null; wizReach = null;
+    persistUserData();
+    showToast("✓ " + channel + " · " + (OUTCOME_LABELS[outcomeId] || outcomeId) + " erfasst");
+  }
+  function removeContact(id) { contacts = contacts.filter(c => c.id !== id); persistUserData(); render(); }
+
+  function resolvePile(pileId, result) {
+    resolutions.unshift({ id: "r_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6), timestamp: Date.now(), pileId, result });
+    persistUserData();
+    const p = PENDING_PILES.find(x => x.id === pileId);
+    const resultLabel = result === "termin" ? "BHV-Termin" : (result === "teilerfolg" ? "Telefontermin vereinbart" : "Kein BHV-Termin");
+    showToast("✓ " + (p ? p.label : pileId) + " → " + resultLabel);
+  }
+  function removeResolution(id) { resolutions = resolutions.filter(r => r.id !== id); persistUserData(); render(); }
+
+  function pileStats(contactsArr, resolutionsArr) {
+    return PENDING_PILES.map(p => {
+      const logged = contactsArr.filter(c => c.channel === p.channel && c.outcome === p.outcome).length;
+      const res = resolutionsArr.filter(r => r.pileId === p.id);
+      const positiv = res.filter(r => r.result === "termin").length;
+      const negativ = res.filter(r => r.result === "kein_termin").length;
+      const teilerfolg = res.filter(r => r.result === "teilerfolg").length;
+      const open = Math.max(0, logged - res.length);
+      return Object.assign({}, p, { logged, positiv, negativ, teilerfolg, resolved: res.length, open });
+    });
+  }
+
+  function funnelStats(contactsArr, resolutionsArr) {
+    const positivDirekt = contactsArr.filter(c => POSITIV_IDS.includes(c.outcome)).length;
+    const negativDirekt = contactsArr.filter(c => NEGATIV_IDS.includes(c.outcome)).length;
+    const teilerfolgDirekt = contactsArr.filter(c => TEILERFOLG_IDS.includes(c.outcome)).length;
+    const positivAufgelöst = resolutionsArr.filter(r => r.result === "termin").length;
+    const negativAufgelöst = resolutionsArr.filter(r => r.result === "kein_termin").length;
+    const teilerfolgAufgelöst = resolutionsArr.filter(r => r.result === "teilerfolg").length;
+    const positiv = positivDirekt + positivAufgelöst;
+    const negativ = negativDirekt + negativAufgelöst;
+    const teilerfolg = teilerfolgDirekt + teilerfolgAufgelöst;
+    const total = contactsArr.length;
+    const openTotal = pileStats(contactsArr, resolutionsArr).reduce((a, p) => a + p.open, 0);
+    return { positiv, negativ, teilerfolg, positivDirekt, positivAufgelöst, negativDirekt, negativAufgelöst, teilerfolgDirekt, teilerfolgAufgelöst, total, openTotal };
+  }
+
+  function pathStats(contactsArr, resolutionsArr) {
+    const paths = [];
+    const directTel = contactsArr.filter(c => c.channel === "Telefon" && (c.outcome === "bhv_termin" || c.outcome === "kein_bhv_termin"));
+    if (directTel.length > 0) {
+      const success = directTel.filter(c => c.outcome === "bhv_termin").length;
+      paths.push({ label: "Telefon – direkt erreicht", total: directTel.length, success, quote: pct(success, directTel.length) });
+    }
+    pileStats(contactsArr, resolutionsArr).forEach(p => {
+      if (p.resolved > 0) paths.push({ label: p.label, total: p.resolved, success: p.positiv, quote: pct(p.positiv, p.resolved) });
+    });
+    return paths;
+  }
+
+  function weekdayStats(arr) {
+    const order = [1, 2, 3, 4, 5, 6, 0];
+    const labels = { 1: "Mo", 2: "Di", 3: "Mi", 4: "Do", 5: "Fr", 6: "Sa", 0: "So" };
+    const stats = {}; order.forEach(d => stats[d] = { total: 0, positiv: 0 });
+    arr.forEach(c => { const day = new Date(c.timestamp).getDay(); stats[day].total++; if (POSITIV_IDS.includes(c.outcome)) stats[day].positiv++; });
+    return order.map(d => ({ label: labels[d], total: stats[d].total, positiv: stats[d].positiv }));
+  }
+  function timeOfDayStats(arr) {
+    const stats = TIME_BUCKETS.map(b => Object.assign({}, b, { total: 0, positiv: 0 }));
+    const other = { key: "sonstige", label: "Sonstige Zeiten", start: null, end: null, total: 0, positiv: 0 };
+    arr.forEach(c => {
+      const hour = new Date(c.timestamp).getHours();
+      const bucket = stats.find(b => hour >= b.start && hour < b.end);
+      const target = bucket || other;
+      target.total++;
+      if (POSITIV_IDS.includes(c.outcome)) target.positiv++;
+    });
+    return other.total > 0 ? stats.concat([other]) : stats;
+  }
+
+  function csvEscape(v) { const s = String(v == null ? "" : v); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  function downloadBlob(filename, content, mime) {
+    try {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) { console.error("Export fehlgeschlagen", e); alert("Export ist fehlgeschlagen."); }
+  }
+  function exportContactsCSV() {
+    const header = ["Datum/Zeit", "Kanal", "Ergebnis"];
+    const rows = contacts.map(c => [new Date(c.timestamp).toLocaleString("de-DE"), c.channel, OUTCOME_LABELS[c.outcome] || c.outcome]);
+    downloadBlob("kontakte.csv", [header].concat(rows).map(r => r.map(csvEscape).join(";")).join("\r\n"), "text/csv;charset=utf-8;");
+  }
+  function exportResolutionsCSV() {
+    const header = ["Datum/Zeit", "Stapel", "Ergebnis"];
+    const rows = resolutions.map(r => {
+      const p = PENDING_PILES.find(x => x.id === r.pileId);
+      return [new Date(r.timestamp).toLocaleString("de-DE"), p ? p.label : r.pileId, r.result === "termin" ? "BHV-Termin" : (r.result === "teilerfolg" ? "Telefontermin vereinbart" : "Kein BHV-Termin")];
+    });
+    downloadBlob("wiederkontakte.csv", [header].concat(rows).map(r => r.map(csvEscape).join(";")).join("\r\n"), "text/csv;charset=utf-8;");
+  }
+  function exportAllJSON() {
+    downloadBlob("kontakt-tracker-export.json", JSON.stringify({ name: currentUser.name, contacts, resolutions, exportedAt: new Date().toISOString() }, null, 2), "application/json");
+  }
+
+  // ---------- password / setup screens ----------
+  function buildSetupScreen() {
+    return `
+      <div class="st-h1">Kontakt-Tracker</div>
+      <p class="st-sub">Einrichtung noch nicht abgeschlossen</p>
+      <div class="st-setup-box">
+        In <code>index.html</code> müssen ganz oben im Script noch <code>SUPABASE_URL</code> und <code>SUPABASE_ANON_KEY</code>
+        eingetragen werden (aus deinem Supabase-Projekt unter <em>Project Settings → API</em>).
+        Details stehen in der <code>README.md</code>.
+      </div>
+    `;
+  }
+  function buildPasswordScreen() {
+    return `
+      <div class="st-h1">Kontakt-Tracker</div>
+      <p class="st-sub">Geschützter Team-Bereich</p>
+      <div class="st-login-card">
+        <p class="st-login-label">Passwort</p>
+        <input id="st-pw-input" type="password" placeholder="Passwort eingeben" autofocus />
+        ${authError ? `<p style="color:var(--red);font-size:12px;margin-top:8px;">${escapeHtml(authError)}</p>` : ""}
+        <button class="st-add" id="st-pw-btn">Freischalten</button>
+      </div>
+    `;
+  }
+  function attachPasswordHandlers() {
+    const input = document.getElementById("st-pw-input");
+    const btn = document.getElementById("st-pw-btn");
+    const submit = () => {
+      if (input.value === SITE_PASSWORD) { setAuthed(); authed = true; authError = ""; load(); }
+      else { authError = "Falsches Passwort."; render(); }
+    };
+    if (btn) btn.onclick = submit;
+    if (input) input.onkeydown = (e) => { if (e.key === "Enter") submit(); };
+  }
+
+  // ---------- login ----------
+  function buildLoginScreen() {
+    const names = Object.values(userIndex);
+    let html = `
+      <div class="st-h1">Kontakt-Tracker</div>
+      <p class="st-sub">Wie Kontakt und Wiederkontakt bei den PJ-Studenten laufen</p>
+      <div class="st-login-card">
+        <p class="st-login-label">Wie heißt du?</p>
+    `;
+    if (names.length > 0) {
+      html += `<div class="st-login-chips">` + names.map(n => `<button class="st-login-chip" data-login-existing="${escapeHtml(n)}">${escapeHtml(n)}</button>`).join("") + `</div>`;
+      html += `<p class="st-login-or">oder neuen Namen eintragen</p>`;
+    }
+    html += `
+        <input id="st-login-name" type="text" placeholder="Vor- oder Spitzname" />
+        <button class="st-add" id="st-login-btn">Los geht's</button>
+        <p class="st-login-hint">Name und Kontaktdaten sind für alle im Team sichtbar — bitte keine Studierendendaten in Notizfelder eintragen.</p>
+      </div>
+      <button class="st-switch-user" id="st-open-admin-btn" style="display:block;margin:14px auto 0;">Namen verwalten</button>
+    `;
+    return html;
+  }
+  function attachLoginHandlers() {
+    const btn = document.getElementById("st-login-btn");
+    if (btn) btn.onclick = () => { const val = document.getElementById("st-login-name").value.trim(); if (val) loginAs(val); };
+    root.querySelectorAll("[data-login-existing]").forEach(chip => { chip.onclick = () => loginAs(chip.getAttribute("data-login-existing")); });
+    const adminLink = document.getElementById("st-open-admin-btn");
+    if (adminLink) adminLink.onclick = () => { adminMode = true; render(); };
+  }
+
+  // ---------- admin ----------
+  function buildAdminScreen() {
+    const entries = Object.entries(userIndex).sort((a, b) => a[1].localeCompare(b[1], "de"));
+    let html = `
+      <div class="st-h1">Namen verwalten</div>
+      <p class="st-sub">Wer im Tracker dauerhaft auswählbar ist</p>
+      <div class="st-login-card">
+        <p class="st-login-label">Neuen Namen hinzufügen</p>
+        <input id="st-admin-name" type="text" placeholder="Vor- oder Spitzname" style="margin-bottom:10px;" />
+        <button class="st-add" id="st-admin-add-btn">Hinzufügen</button>
+      </div>
+    `;
+    html += `<div class="st-section-title">Aktuelle Namen (${entries.length})</div>`;
+    if (entries.length === 0) html += `<div class="st-empty">Noch keine Namen hinterlegt.</div>`;
+    else entries.forEach(([slug, name]) => {
+      html += `
+        <div class="st-card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:8px;gap:8px;">
+          <span style="font-size:15px;font-weight:600;">${escapeHtml(name)}</span>
+          <span style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+            <button class="st-switch-user" data-admin-reset="${slug}" data-admin-reset-name="${escapeHtml(name)}" title="Alle Einträge dieser Person löschen">↺ Zurücksetzen</button>
+            <button class="st-log-del" data-admin-remove="${slug}" title="Entfernen" style="font-size:15px;">✕</button>
+          </span>
+        </div>
+      `;
+    });
+    html += `<button class="st-toggle" id="st-admin-back-btn" style="margin-top:6px;">← Zurück</button>`;
+    return html;
+  }
+  function attachAdminHandlers() {
+    const addBtn = document.getElementById("st-admin-add-btn");
+    if (addBtn) addBtn.onclick = async () => { const val = document.getElementById("st-admin-name").value.trim(); if (!val) return; await addToUserIndex(slugify(val), val); render(); };
+    root.querySelectorAll("[data-admin-remove]").forEach(btn => { btn.onclick = async () => { await removeFromUserIndex(btn.getAttribute("data-admin-remove")); render(); }; });
+    root.querySelectorAll("[data-admin-reset]").forEach(btn => {
+      btn.onclick = async () => {
+        const slug = btn.getAttribute("data-admin-reset");
+        const name = btn.getAttribute("data-admin-reset-name") || userIndex[slug] || slug;
+        await resetPersonData(slug, name);
+        render();
+      };
+    });
+    const backBtn = document.getElementById("st-admin-back-btn");
+    if (backBtn) backBtn.onclick = () => { adminMode = false; render(); };
+  }
+
+  // ---------- header ----------
+  function buildHeader() {
+    return `
+      <div class="st-h1">Kontakt-Tracker</div>
+      <p class="st-sub">Wie Kontakt und Wiederkontakt bei den PJ-Studenten laufen</p>
+      <div class="st-user-bar">
+        <span>👤 <b>${escapeHtml(currentUser.name)}</b></span>
+        <span>
+          <button class="st-switch-user" id="st-admin-link-btn" style="margin-right:10px;">Verwalten</button>
+          <button class="st-switch-user" id="st-switch-user-btn">Wechseln</button>
+        </span>
+      </div>
+      <div class="st-tabs">
+        <button class="st-tab${view === "me" ? " active" : ""}" id="st-tab-me">Meine Ansicht</button>
+        <button class="st-tab${view === "all" ? " active" : ""}" id="st-tab-all">Gesamtübersicht</button>
+      </div>
+    `;
+  }
+
+  // ---------- contact wizard ----------
+  function buildWizard() {
+    let html = `<div class="st-section-title">Kontakt erfassen</div><div class="st-wizard-card">`;
+    if (!wizChannel) {
+      html += `<div class="st-wizard-step-label">Worüber lief der Kontakt?</div><div class="st-wizard-grid">`;
+      CHANNELS.forEach(ch => { html += `<button class="st-wizard-btn wide" data-wiz-channel="${ch}">${ch}</button>`; });
+      html += `</div>`;
+    } else if (wizChannel === "Telefon" && !wizReach) {
+      html += `<button class="st-wizard-back" id="st-wiz-back-channel">← Kanal ändern</button>`;
+      html += `<div class="st-wizard-step-label">Telefon: erreicht?</div><div class="st-wizard-grid">`;
+      html += `<button class="st-wizard-btn" data-wiz-reach="erreicht">Erreicht</button>`;
+      html += `<button class="st-wizard-btn" data-wiz-reach="nicht_erreicht">Nicht erreicht</button>`;
+      html += `</div>`;
+    } else if (wizChannel === "Telefon" && wizReach === "erreicht") {
+      html += `<button class="st-wizard-back" id="st-wiz-back-reach">← Zurück</button>`;
+      html += `<div class="st-wizard-step-label">Telefon, erreicht: Ergebnis</div><div class="st-wizard-grid">`;
+      TELEFON_ERREICHT_OUTCOMES.forEach(o => { html += `<button class="st-wizard-btn ${o.type} wide" data-wiz-outcome="${o.id}">${o.label}</button>`; });
+      html += `</div>`;
+    } else if (wizChannel === "Telefon" && wizReach === "nicht_erreicht") {
+      html += `<button class="st-wizard-back" id="st-wiz-back-reach">← Zurück</button>`;
+      html += `<div class="st-wizard-step-label">Telefon, nicht erreicht: genauer</div><div class="st-wizard-grid">`;
+      TELEFON_NICHT_ERREICHT_OUTCOMES.forEach(o => {
+        if (o.id === "whatsapp_hinterlassen") html += `<button class="st-wizard-btn" data-wiz-whatsapp-left="1">${o.label}</button>`;
+        else html += `<button class="st-wizard-btn" data-wiz-outcome="${o.id}">${o.label}</button>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
+  function buildResolutionSection(contactsArr, resolutionsArr) {
+    const piles = pileStats(contactsArr, resolutionsArr).filter(p => p.logged > 0);
+    let html = `<div class="st-section-title">Antwort-Tracking · Wiederkontakt auflösen</div>`;
+    if (piles.length === 0) { html += `<div class="st-empty">Noch keine offenen Stapel — sobald ein Kontakt mit "Meldet sich", "Mailbox", "SMS" oder "Nicht erreicht" erfasst wird, taucht er hier auf.</div>`; return html; }
+    piles.forEach(p => {
+      html += `
+        <div class="st-pile-row">
+          <div class="st-pile-top"><span class="st-pile-label">${p.label}</span><span class="st-pile-count">${p.open} offen</span></div>
+          <div class="st-pile-btns">
+            <button class="st-pile-btn positiv" data-resolve="${p.id}:termin" ${p.open === 0 ? "disabled style='opacity:.4;'" : ""}>✓ BHV-Termin</button>
+            <button class="st-pile-btn teilerfolg" data-resolve="${p.id}:teilerfolg" ${p.open === 0 ? "disabled style='opacity:.4;'" : ""}>◐ Telefontermin</button>
+            <button class="st-pile-btn negativ" data-resolve="${p.id}:kein_termin" ${p.open === 0 ? "disabled style='opacity:.4;'" : ""}>✕ Kein BHV-Termin</button>
+          </div>
+          ${p.resolved > 0 ? `<div class="st-pile-resolved">Bisher aufgelöst: ${p.resolved} · davon ${p.positiv} BHV-Termin (${pct(p.positiv, p.resolved)}%)${p.teilerfolg > 0 ? ` · ${p.teilerfolg} Telefontermin` : ""}</div>` : ""}
+        </div>
+      `;
+    });
+    return html;
+  }
+
+  function buildPathComparisonSection(contactsArr, resolutionsArr) {
+    const paths = pathStats(contactsArr, resolutionsArr);
+    if (paths.length === 0) return "";
+    const sorted = paths.slice().sort((a, b) => b.quote - a.quote);
+    const qualifying = sorted.filter(p => p.total >= 3);
+    const best = qualifying[0] || null;
+    let html = `<div class="st-section-title">Erfolgreichster Kontaktweg</div><div class="st-card">`;
+    html += best
+      ? `<div class="st-besttime">Bisher am erfolgreichsten: <b>${escapeHtml(best.label)}</b> mit ${best.quote}% Terminquote (${best.success} von ${best.total} entschiedenen Kontakten)</div>`
+      : `<div class="st-besttime">Noch zu wenig entschiedene Kontakte pro Pfad (mind. 3) für eine verlässliche Empfehlung.</div>`;
+    sorted.forEach(p => {
+      html += `
+        <div class="st-bar-row">
+          <div class="st-bar-label">${escapeHtml(p.label)}</div>
+          <div class="st-bar-track"><div class="st-bar-fill" style="width:${Math.max(p.quote, p.total ? 3 : 0)}%"></div></div>
+          <div class="st-bar-pct"><b>${p.quote}%</b> <span style="color:var(--muted)">(${p.total})</span></div>
+        </div>
+      `;
+    });
+    html += `<div class="st-weekday-note">% = Terminquote unter direkt entschiedenen bzw. aufgelösten Kontakten je Pfad · (n) = Stichprobengröße</div></div>`;
+    return html;
+  }
+
+  function buildWeekdaySection(arr) {
+    if (!arr || arr.length === 0) return "";
+    const stats = weekdayStats(arr);
+    const maxTotal = Math.max(1, ...stats.map(s => s.total));
+    let html = `<div class="st-section-title">Vergleich nach Wochentag</div><div class="st-card">`;
+    stats.forEach(s => {
+      const w = Math.round((s.total / maxTotal) * 100);
+      html += `
+        <div class="st-bar-row">
+          <div class="st-bar-label" style="width:28px;">${s.label}</div>
+          <div class="st-bar-track"><div class="st-bar-fill" style="width:${s.total ? Math.max(w, 4) : 0}%"></div></div>
+          <div class="st-bar-pct">${s.total ? pct(s.positiv, s.total) + "%" : "–"} <span style="color:var(--muted)">(${s.total})</span></div>
+        </div>
+      `;
+    });
+    html += `<div class="st-weekday-note">Balken = Anzahl Kontakte · % = Terminquote am jeweiligen Wochentag</div></div>`;
+    return html;
+  }
+  function buildTimeOfDaySection(arr) {
+    if (!arr || arr.length === 0) return "";
+    const stats = timeOfDayStats(arr);
+    const maxTotal = Math.max(1, ...stats.map(s => s.total));
+    const qualifying = stats.filter(s => s.total >= 3 && s.start !== null);
+    const best = qualifying.length ? qualifying.reduce((a, b) => (pct(b.positiv, b.total) > pct(a.positiv, a.total) ? b : a)) : null;
+    let html = `<div class="st-section-title">Beste Kontaktzeiten</div><div class="st-card">`;
+    html += best
+      ? `<div class="st-besttime">Bisher am erfolgreichsten: <b>${best.label}</b> mit ${pct(best.positiv, best.total)}% Terminquote (${best.positiv} von ${best.total} Kontakten)</div>`
+      : `<div class="st-besttime">Noch zu wenig Daten pro Zeitfenster (mind. 3 Kontakte nötig) für eine verlässliche Empfehlung.</div>`;
+    stats.forEach(s => {
+      const w = Math.round((s.total / maxTotal) * 100);
+      html += `
+        <div class="st-bar-row">
+          <div class="st-bar-label" style="width:78px;">${s.label}</div>
+          <div class="st-bar-track"><div class="st-bar-fill" style="width:${s.total ? Math.max(w, 4) : 0}%"></div></div>
+          <div class="st-bar-pct">${s.total ? pct(s.positiv, s.total) + "%" : "–"} <span style="color:var(--muted)">(${s.total})</span></div>
+        </div>
+      `;
+    });
+    html += `<div class="st-weekday-note">Balken = Anzahl Kontakte · % = Terminquote im jeweiligen Zeitfenster</div></div>`;
+    return html;
+  }
+
+  function buildLog() {
+    if (contacts.length === 0) return "";
+    const shown = showAllLog ? contacts : contacts.slice(0, 6);
+    let html = `<div class="st-section-title">Verlauf</div><div class="st-card">`;
+    shown.forEach(c => {
+      html += `
+        <div class="st-log-item">
+          <span class="st-log-left">
+            <span class="st-dot" style="background:${OUTCOME_COLORS[c.outcome] || "#999"}"></span>
+            ${c.channel} · ${OUTCOME_LABELS[c.outcome] || c.outcome}
+            <span class="st-log-time">${formatTime(c.timestamp)}</span>
+          </span>
+          <button class="st-log-del" data-contact-del="${c.id}" title="Löschen">✕</button>
+        </div>
+      `;
+    });
+    html += `</div>`;
+    if (contacts.length > 6) html += `<button class="st-log-toggle" id="st-log-toggle-all">${showAllLog ? "Weniger anzeigen" : "Alle " + contacts.length + " anzeigen"}</button>`;
+    return html;
+  }
+
+  function buildExportSection() {
+    return `
+      <div class="st-section-title">Daten-Export</div>
+      <div class="st-card">
+        <button class="st-export-btn" id="st-export-contacts-csv">Kontakte als CSV</button>
+        <button class="st-export-btn" id="st-export-resolutions-csv">Wiederkontakte als CSV</button>
+        <button class="st-export-btn" id="st-export-json">Alles als JSON</button>
+      </div>
+    `;
+  }
+
+  function buildMyView() {
+    const f = funnelStats(contacts, resolutions);
+    let html = `
+      <div class="st-summary">
+        <div class="st-stat"><span class="n">${f.total}</span><span class="l">Kontakte gesamt</span></div>
+        <div class="st-stat"><span class="n">${pct(f.positiv, f.total)}%</span><span class="l">Erfolgsquote</span></div>
+        <div class="st-stat"><span class="n">${f.openTotal}</span><span class="l">Offene Stapel</span></div>
+      </div>
+      ${f.teilerfolg > 0 ? `<p style="font-size:11.5px;color:var(--muted);margin:-12px 0 20px;">davon ${f.teilerfolg} Teilerfolge (Telefontermin vereinbart)</p>` : ""}
+    `;
+    html += buildWizard();
+    html += buildResolutionSection(contacts, resolutions);
+    html += buildPathComparisonSection(contacts, resolutions);
+    html += buildWeekdaySection(contacts);
+    html += buildTimeOfDaySection(contacts);
+    html += buildLog();
+    html += buildExportSection();
+    return html;
+  }
+
+  function buildAllView() {
+    if (loadingAll || allUsersData === null) return `<div class="st-loading">Lade Gesamtübersicht …</div>`;
+    const people = allUsersData;
+    let html = `<button class="st-toggle" id="st-refresh-all">🔄 Aktualisieren</button>`;
+    if (people.length === 0) { html += `<div class="st-empty">Noch keine Daten von anderen Personen vorhanden.</div>`; return html; }
+
+    const combined = funnelStats(
+      people.reduce((a, p) => a.concat(p.contacts || []), []),
+      people.reduce((a, p) => a.concat(p.resolutions || []), [])
+    );
+    html += `
+      <div class="st-summary">
+        <div class="st-stat"><span class="n">${combined.total}</span><span class="l">Kontakte gesamt</span></div>
+        <div class="st-stat"><span class="n">${pct(combined.positiv, combined.total)}%</span><span class="l">Erfolgsquote</span></div>
+        <div class="st-stat"><span class="n">${combined.openTotal}</span><span class="l">Offene Stapel</span></div>
+      </div>
+      ${combined.teilerfolg > 0 ? `<p style="font-size:11.5px;color:var(--muted);margin:-12px 0 20px;">davon ${combined.teilerfolg} Teilerfolge (Telefontermin vereinbart)</p>` : ""}
+    `;
+
+    html += `<div class="st-section-title">Personen</div>`;
+    const personRows = people.map(p => {
+      const pf = funnelStats(p.contacts || [], p.resolutions || []);
+      return { name: p.name, total: pf.total, quote: pct(pf.positiv, pf.total), open: pf.openTotal };
+    }).sort((a, b) => b.quote - a.quote);
+    personRows.forEach(p => {
+      html += `
+        <div class="st-card">
+          <p style="font-size:15px;font-weight:600;margin:0 0 8px;">${escapeHtml(p.name)}</p>
+          <div style="display:flex;gap:14px;">
+            <div style="flex:1;text-align:center;"><div style="font-size:15px;font-weight:600;">${p.total}</div><div style="font-size:10px;color:var(--muted);">Kontakte</div></div>
+            <div style="flex:1;text-align:center;"><div style="font-size:15px;font-weight:600;" class="${rateClass(p.quote)}">${p.total ? p.quote + "%" : "–"}</div><div style="font-size:10px;color:var(--muted);">Erfolg</div></div>
+            <div style="flex:1;text-align:center;"><div style="font-size:15px;font-weight:600;">${p.open}</div><div style="font-size:10px;color:var(--muted);">Offen</div></div>
+          </div>
+        </div>
+      `;
+    });
+
+    const allContacts = people.reduce((a, p) => a.concat(p.contacts || []), []);
+    const allResolutions = people.reduce((a, p) => a.concat(p.resolutions || []), []);
+    if (allContacts.length > 0) {
+      html += buildPathComparisonSection(allContacts, allResolutions);
+      html += `<div class="st-section-title">Beste Kontaktzeiten · alle Personen</div>`;
+      html += buildTimeOfDaySection(allContacts);
+      html += `<div class="st-section-title">Wochentage · alle Personen</div>`;
+      html += buildWeekdaySection(allContacts);
+    }
+    return html;
+  }
+
+  function buildToast() {
+    if (!toastMessage) return "";
+    return `<div class="st-toast">${escapeHtml(toastMessage)}</div>`;
+  }
+
+  // ---------- main render ----------
+  function render() {
+    if (!configOk) { root.innerHTML = buildSetupScreen(); return; }
+    if (!authed) { root.innerHTML = buildToast() + buildPasswordScreen(); attachPasswordHandlers(); return; }
+    if (!loaded) { root.innerHTML = '<div class="st-loading">Lädt …</div>'; return; }
+    if (adminMode) { root.innerHTML = buildToast() + buildAdminScreen(); attachAdminHandlers(); return; }
+    if (!currentUser) { root.innerHTML = buildToast() + buildLoginScreen(); attachLoginHandlers(); return; }
+    let html = buildHeader();
+    html += (view === "me") ? buildMyView() : buildAllView();
+    root.innerHTML = buildToast() + html;
+    attachHandlers();
+  }
+
+  function attachHandlers() {
+    const switchBtn = document.getElementById("st-switch-user-btn"); if (switchBtn) switchBtn.onclick = switchUser;
+    const adminLinkBtn = document.getElementById("st-admin-link-btn"); if (adminLinkBtn) adminLinkBtn.onclick = () => { adminMode = true; render(); };
+    const tabMe = document.getElementById("st-tab-me"); if (tabMe) tabMe.onclick = () => { view = "me"; render(); };
+    const tabAll = document.getElementById("st-tab-all"); if (tabAll) tabAll.onclick = () => { view = "all"; if (allUsersData === null) refreshAllUsersData(); else render(); };
+    const refreshAllBtn = document.getElementById("st-refresh-all"); if (refreshAllBtn) refreshAllBtn.onclick = refreshAllUsersData;
+
+    root.querySelectorAll("[data-wiz-channel]").forEach(btn => {
+      btn.onclick = () => {
+        const ch = btn.getAttribute("data-wiz-channel");
+        if (ch === "WhatsApp") { logContact("WhatsApp", "meldet_sich"); return; }
+        wizChannel = ch; wizReach = null; render();
+      };
+    });
+    root.querySelectorAll("[data-wiz-reach]").forEach(btn => { btn.onclick = () => { wizReach = btn.getAttribute("data-wiz-reach"); render(); }; });
+    root.querySelectorAll("[data-wiz-outcome]").forEach(btn => { btn.onclick = () => { logContact(wizChannel, btn.getAttribute("data-wiz-outcome")); }; });
+    root.querySelectorAll("[data-wiz-whatsapp-left]").forEach(btn => { btn.onclick = () => { logContact("WhatsApp", "meldet_sich"); }; });
+    const backChannel = document.getElementById("st-wiz-back-channel"); if (backChannel) backChannel.onclick = () => { wizChannel = null; wizReach = null; render(); };
+    const backReach = document.getElementById("st-wiz-back-reach"); if (backReach) backReach.onclick = () => { wizReach = null; render(); };
+
+    root.querySelectorAll("[data-resolve]").forEach(btn => {
+      btn.onclick = () => {
+        const raw = btn.getAttribute("data-resolve");
+        const idx = raw.lastIndexOf(":");
+        resolvePile(raw.slice(0, idx), raw.slice(idx + 1));
+      };
+    });
+
+    root.querySelectorAll("[data-contact-del]").forEach(btn => { btn.onclick = () => removeContact(btn.getAttribute("data-contact-del")); });
+    const logToggleAll = document.getElementById("st-log-toggle-all"); if (logToggleAll) logToggleAll.onclick = () => { showAllLog = !showAllLog; render(); };
+
+    const expContacts = document.getElementById("st-export-contacts-csv"); if (expContacts) expContacts.onclick = exportContactsCSV;
+    const expRes = document.getElementById("st-export-resolutions-csv"); if (expRes) expRes.onclick = exportResolutionsCSV;
+    const expJson = document.getElementById("st-export-json"); if (expJson) expJson.onclick = exportAllJSON;
+  }
+
+  if (configOk && authed) { load(); } else { render(); }
+})();
+</script>
+</body>
+</html>
